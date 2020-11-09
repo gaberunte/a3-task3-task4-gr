@@ -49,8 +49,9 @@ urchins_summary <- urchins_raw %>%
   group_by(common_name) %>% 
   summarise(mean_size = mean(size), median_size= median(size), sd_size = sd(size), n= n())
   
-kable(urchins_summary,
-      col.names = c("Common name", "Mean size (cm)", "Median size (cm)", "Standard deviation of sizes (cm)", "Count"))
+kbl(urchins_summary,
+      col.names = c("Common name", "Mean size (cm)", "Median size (cm)", "Standard deviation of sizes (cm)", "Count")) %>%
+  kable_material()
 ```
 
 From the histogram, boxplot, and data table, I can see that purple urchins are smaller (average of 4.5cm in diameter)), in general, than red urchins (average of 6.8cm in diameter). Tight boxes in the boxplot, relatively-normally-distributed histograms, and the similarity of mean and median values give me comfort in expecting that this is not a size-skewed subsample in one way or another (the sample size is also huge). Urchins are generally within +/- 50% of the peak of their histogram ditributions, and have reaonable small sd:mean ratios (0.26 and 0.28 for purple and red urchins, respectively), so their spread does not raise any red flags either. 

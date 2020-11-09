@@ -1,0 +1,66 @@
+---
+title: "Assignment 3 task 4"
+author: "Gabe Runte"
+date: "11/9/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(here)
+library(janitor)
+library(kableExtra)
+library(lubridate)
+```
+
+```{r, message=FALSE, warning=FALSE}
+urchins_raw <- read_csv(here("data","urchins.csv")) %>% 
+  clean_names()
+
+p_urchins_napl_012010 <- urchins_raw %>% 
+  filter(common_name=="Purple Urchin") %>% 
+  mutate(date= mdy(date)) %>%  #this and the two following funcions use lubridate:: to create date data
+  mutate(year= year(date)) %>% 
+  mutate(month= month(date)) %>% 
+  mutate(site_full = case_when(      #functions as an "if ___, then" statement to create full site names
+    site == "NAPL" ~ "Naples Reef",
+    site == "AQUE" ~ "Arroyo Quemado Reef",
+    site == "CARP" ~ "Carpinteria Reef",
+    site == "MOHK" ~ "Mohawk Reef",
+    site == "IVEE" ~ "Isla Vista Reef")) %>% 
+  filter(year == "2010" & month == "1" & site == "NAPL") #filtering to assigned subset for below vis/analysis
+```
+
+```{r, message=FALSE, warning=FALSE}
+ggplot(p_urchins_napl_012010, aes(sample= size, color= treatment, fill= treatment)) +
+  geom_qq() +
+  geom_qq_line() #create a qq plot with theoretical distribution lines. color by treatment with stock colors
+
+ggplot(p_urchins_napl_012010, aes(x= size, fill= treatment, color= treatment)) +
+  geom_histogram(position= "identity", alpha= 0.5, bins= 20) #basic histogram with transparency to see groups
+
+
+```
+
+These two plots give me the impression that our data is not normally distributed around some mean value, but that instead we have bins reducing the actual variation in urchin size. I would guess this is likely a relic of difficult meaurements and/or confidence levels in measurement technique.
+
+```{r, message=FALSE, warning=FALSE}
+napl_urchins_summary <- p_urchins_napl_012010 %>% 
+  group_by(treatment) %>% 
+  summarise(mean_size = mean(size), median_size= median(size), sd_size = sd(size), n= n())
+#create a summary df of our purple urchins from January 2010 at Naples. 
+
+kbl(napl_urchins_summary, col.names = c("Treatment", "Mean size (cm)", "Median size (cm)", "Standard deviation of sizes (cm)", "Count")) %>% #create a prettier table for knitting with more viewer-friendly column headers
+  kable_material()
+
+```
+
+```{r, message=FALSE, warning=FALSE}
+t.test(size~treatment, data=p_urchins_napl_012010)
+```
+
+The means of the ANNUAL and CONTROL treatments of purple urchins from Naples Reef in 2010 were slightly different at 3.92cm and 3.73cm, respectively. With a p-value of 0.2536, and relatively large standard deviations of roughly 25% of the mean, it would be difficult to claim any meaningful influence of kelp removal on urchin size though it is interesting that urchins at sites where a massive food source was annually removed tended to be larger if only within a negligible range (I might have expected a stronger effect in the opposite direction). 
+
+The p-value we found represents the probability of drawing sample means at least as different as the means of our two sample populations if they were actually drawn from a population with the same mean value. 
