@@ -1,0 +1,86 @@
+---
+title: "a3_task3_gabe_runte"
+author: "Gabe Runte"
+date: "11/6/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE, message=FALSE, warning=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(here)
+library(janitor)
+library(kableExtra)
+library(lubridate)
+```
+
+```{r, message=FALSE, warning=FALSE}
+urchins_raw <- read_csv(here("data","urchins.csv")) %>% 
+  clean_names()
+```
+
+##Section 1
+Size comparisons, purple and red urchins
+```{r, message=FALSE, warning=FALSE}
+ggplot(urchins_raw, aes(fill= common_name)) +
+  geom_histogram(aes(size)) +
+  labs(
+    x= "Size (cm)",
+    y= "Count by size"
+  ) +
+  facet_wrap(~ common_name) +
+  theme(legend.position = "none")
+
+ggplot(urchins_raw, aes(x= common_name, y= size, fill= common_name)) +
+  geom_boxplot() +
+  labs(
+    x= "Species common name",
+    y= "Size (cm)"
+  ) +
+  theme(
+    legend.position = "none"
+  )
+  
+```
+
+```{r, message=FALSE, warning=FALSE}
+urchins_summary <- urchins_raw %>% 
+  group_by(common_name) %>% 
+  summarise(mean_size = mean(size), median_size= median(size), sd_size = sd(size), n= n())
+  
+kable(urchins_summary,
+      col.names = c("Common name", "Mean size (cm)", "Median size (cm)", "Standard deviation of sizes (cm)", "Count"))
+```
+
+From the histogram, boxplot, and data table, I can see that purple urchins are smaller (average of 4.5cm in diameter)), in general, than red urchins (average of 6.8cm in diameter). Tight boxes in the boxplot, relatively-normally-distributed histograms, and the similarity of mean and median values give me comfort in expecting that this is not a size-skewed subsample in one way or another (the sample size is also huge). Urchins are generally within +/- 50% of the peak of their histogram ditributions, and have reaonable small sd:mean ratios (0.26 and 0.28 for purple and red urchins, respectively), so their spread does not raise any red flags either. 
+
+##Section 2
+
+```{r, message=FALSE, warning=FALSE}
+
+purple_urchins <- urchins_raw %>% 
+  filter(common_name=="Purple Urchin") %>% 
+  mutate(date= mdy(date)) %>% 
+  mutate(year= year(date)) %>% 
+  mutate(site_full = case_when(
+    site == "NAPL" ~ "Naples Reef",
+    site == "AQUE" ~ "Arroyo Quemado Reef",
+    site == "CARP" ~ "Carpinteria Reef",
+    site == "MOHK" ~ "Mohawk Reef",
+    site == "IVEE" ~ "Isla Vista Reef"
+  ))
+
+purple_summary <- purple_urchins %>% 
+  count(site_full, year)
+  
+ggplot(purple_summary, aes(x=year, y= n, color= site_full, fill= site_full))+
+  geom_line()+
+  geom_point() +
+  labs(
+    x="Year",
+    y= "Count"
+  )
+
+```
+
